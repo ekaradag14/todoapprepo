@@ -7,9 +7,11 @@
 //
 
 import UIKit
-import CoreData
+import RealmSwift
 
 class CategoryViewController: UITableViewController {
+    
+    let realm = try! Realm() // burada ! kullanıyoruz ancak problem değil çünkü realm diyorki eğer ilk defa realm yaratıyorsanız bunu bir do catch e sokun ancak ondan sonra gerek yok
     
     var textField = UITextField()
     var categoryArray = [CategoryData]()
@@ -32,10 +34,10 @@ class CategoryViewController: UITableViewController {
         let alert = UIAlertController(title: "Add New Todoey Item", message: "", preferredStyle: .alert)
         let action = UIAlertAction(title: "Add Category", style: .default) { (action) in
             
-            let newCategory = CategoryData(context: self.context)
+            let newCategory = Category()
             newCategory.name = self.textField.text!
             self.categoryArray.append(newCategory)
-            self.saveCategories()
+            self.saveCategories(category: newCategory)
             
         }
         func configurationTextField(textField: UITextField!) {
@@ -93,10 +95,12 @@ extension CategoryViewController {
 extension CategoryViewController {
     
     
-    func saveCategories() {
+    func saveCategories(category: Category) {
         
         do {
-            try context.save()
+            try realm.write {
+                realm.add(category)
+            }
         } catch {
             print("Error saving context \(error)")
         }
@@ -114,9 +118,9 @@ extension CategoryViewController {
     
     func loadCategories() {
         
-        let request : NSFetchRequest<CategoryData> = CategoryData.fetchRequest()
-        requestData(with: request)
-        
+//        let request : NSFetchRequest<CategoryData> = CategoryData.fetchRequest()
+//        requestData(with: request)
+//        
     }
 }
 

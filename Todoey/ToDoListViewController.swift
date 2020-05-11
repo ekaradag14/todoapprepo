@@ -13,24 +13,23 @@ class ToDoListViewController: UITableViewController {
     var textField = UITextField()
     
     var itemArray = [Item]()
- 
-    var selectedCategory : CategoryData? {
-          didSet{
-              requestData()
-          }
-      }
     
-    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext // en baştaki parantezi app delegate e ulaşmak için yazdık. UIApplication dediğimiz çalışan uygulama shared ile singletonlara ulaşıyoruz daha sonra bir delegate çağırıyoruz ve diyoruz ki bunu app delegate olarak kullan
-    //            let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist") // plist kullanmadığımız için buna ihtiyacımız yok ancak file path'i alabiliriz çünkü datanın nerede saklandığına bakmak istiyoruz.
-    //    var defaults = UserDefaults.standard
+    var selectedCategory : CategoryData? {
+        didSet{
+            let parentalPredicate = NSPredicate(format: "parentRelationship.name MATCHES %@", selectedCategory!.name!)
+            takeData(usingPredicate: parentalPredicate)
+        }
+    }
+    
+ 
     override func viewDidLoad() {
         super.viewDidLoad()
         //      searchbar 'ın delegate ini searchbara tıklayıp control ile view controller kutucuğuna süsürkleyerek view controller yaptık
         print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         //        print(dataFilePath)
         //        retrieveData()
-        
-       requestData()
+        let parentalPredicate = NSPredicate(format: "parentRelationship.name MATCHES %@", selectedCategory!.name!)
+        takeData(usingPredicate: parentalPredicate)
         
         //        if let items = defaults.array(forKey: "TodoListArray") as? [Item] { // bunlar user defaultsdan data yüklemek için kullanılıyor
         //            itemArray = items
@@ -51,7 +50,7 @@ class ToDoListViewController: UITableViewController {
             newItem.title = self.textField.text!
             newItem.done = false
             newItem.parentRelationship = self.selectedCategory
-           
+            
             self.itemArray.append(newItem)
             self.saveItems()
             //
@@ -74,18 +73,16 @@ class ToDoListViewController: UITableViewController {
         
         do {
             try context.save()
-           
+            
         } catch {
             print("Error saving context \(error)")
         }
         self.tableView.reloadData()
     }
     
-    func requestData(with request:NSFetchRequest<Item> = Item.fetchRequest()) {
+    func takeData(with request:NSFetchRequest<Item> = Item.fetchRequest(),usingPredicate predicate:NSPredicate? = nil) {
         
-        let predicate = NSPredicate(format: "parentRelationship.name MATCHES %@", selectedCategory!.name!)
-             
-             request.predicate = predicate
+        request.predicate = predicate
         do {
             itemArray =  try  context.fetch(request)
         } catch {
@@ -94,52 +91,39 @@ class ToDoListViewController: UITableViewController {
     }
     
     
-    
-    func sortData(with request:NSFetchRequest<Item> = Item.fetchRequest()) {
-        do {
-                itemArray =  try  context.fetch(request)
-            } catch {
-                print("Error retrieving context \(error)")
-            }
-    }
     // MARK: - Internal Resource Database Fetch
-
-
-//        let request : NSFetchRequest<Item> = Item.fetchRequest() // Output'un ne type da olduğunu belirtmemiz gerekiyor burada
-        
-        
     
     
+    //        let request : NSFetchRequest<Item> = Item.fetchRequest() // Output'un ne type da olduğunu belirtmemiz gerekiyor burada
     
-    
-//    // MARK: - External Resource Database Fetch
-//    func retrieveData() {
-//
-//        guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
-//
-//        let managedContext = appDelegate.persistentContainer.viewContext
-//
-//        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Item")
-//
-//        //        fetchRequest.fetchLimit = 1
-//        //        fetchRequest.predicate = NSPredicate(format: "username = %@", "Ankur")
-//        //        fetchRequest.sortDescriptors = [NSSortDescriptor.init(key: "email", ascending: false)]
-//        //
-//        do {
-//            let result = try managedContext.fetch(fetchRequest)
-//            itemArray = result as! [Item]
-//            print(itemArray)
-//            //                for data in result as! [Item] {
-//            //                    itemArray = result as! [Item]
-//            //                    print(itemArray)
-//            //                }
-//
-//        } catch {
-//
-//            print("Failed")
-//        }
-//    }
-//
+    //    // MARK: - External Resource Database Fetch
+    //    func retrieveData() {
+    //
+    //        guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
+    //
+    //        let managedContext = appDelegate.persistentContainer.viewContext
+    //
+    //        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Item")
+    //
+    //        //        fetchRequest.fetchLimit = 1
+    //        //        fetchRequest.predicate = NSPredicate(format: "username = %@", "Ankur")
+    //        //        fetchRequest.sortDescriptors = [NSSortDescriptor.init(key: "email", ascending: false)]
+    //        //
+    //        do {
+    //            let result = try managedContext.fetch(fetchRequest)
+    //            itemArray = result as! [Item]
+    //            print(itemArray)
+    //            //                for data in result as! [Item] {
+    //            //                    itemArray = result as! [Item]
+    //            //                    print(itemArray)
+    //            //                }
+    //
+    //        } catch {
+    //
+    //            print("Failed")
+    //        }
+    //    }
+    //
     //    func loadItems() {
     //
     //        if let data = try? Data(contentsOf: dataFilePath!) {
@@ -163,25 +147,29 @@ extension ToDoListViewController : UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         let request : NSFetchRequest<Item> = Item.fetchRequest()
         
-        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!) // [cd] burada case de diacrateic ' e dikkat etme anlamına getiriyor
+        let parentalPredicate = NSPredicate(format: "parentRelationship.name MATCHES %@", selectedCategory!.name!)
+        let searchPredicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!) // [cd] burada case de diacrateic ' e dikkat etme anlamına getiriyor
+        let searchCompoundPredicate = NSCompoundPredicate(type: .and, subpredicates: [parentalPredicate, searchPredicate])
         
-        request.predicate = predicate
+        
+        request.predicate = searchCompoundPredicate
         
         let sortDescriptor = NSSortDescriptor(key: "title", ascending: true)
         
         request.sortDescriptors = [sortDescriptor]
         
-        sortData(with: request)
-        
-    
-        
+        takeData(with: request, usingPredicate: searchCompoundPredicate)
         tableView.reloadData()
         
     }
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        if searchBar.text! == ""  {
-            requestData()
+        if searchBar.text?.count == 0  {
+            let parentalPredicate = NSPredicate(format: "parentRelationship.name MATCHES %@", selectedCategory!.name!)
+            
+            
+            takeData(usingPredicate: parentalPredicate)
+            tableView.reloadData()
             // yani cursor'ı durdur ve ve klavyeyi aşağıya çek çünkü artık first responder yani seçilmiş eleman değilsin
             
             DispatchQueue.main.async { // user interface i yani foreground ı değiştirirken her zaman main thread e geç
