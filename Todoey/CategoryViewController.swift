@@ -14,19 +14,16 @@ class CategoryViewController: UITableViewController {
     let realm = try! Realm() // burada ! kullanıyoruz ancak problem değil çünkü realm diyorki eğer ilk defa realm yaratıyorsanız bunu bir do catch e sokun ancak ondan sonra gerek yok
     
     var textField = UITextField()
-    var categoryArray = [CategoryData]()
+    var categories: Results<Category>? // Bu bir realm sınıfı
+    
     var indexPath1: Int = 0
-  
-    
-    
-    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     override func viewDidLoad() {
         
         super.viewDidLoad()
         
         loadCategories()
-        
+      
 //        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
     }
@@ -36,7 +33,7 @@ class CategoryViewController: UITableViewController {
             
             let newCategory = Category()
             newCategory.name = self.textField.text!
-            self.categoryArray.append(newCategory)
+//            self.categoryArray.append(newCategory) bu satırı kullanmıyoruz çünkü categoryArray bir result sınıfı array ve append etmeye gerek yok çünkü auto-append var
             self.saveCategories(category: newCategory)
             
         }
@@ -59,15 +56,33 @@ class CategoryViewController: UITableViewController {
 extension CategoryViewController {
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return categoryArray.count
         
+
+        
+        if categories?.count == 0 {
+            return 1
+        } else {
+            return categories!.count
+        }
+  
+//        return categories?.count ?? 1 // bu nil coalesing operator: bu value nill olabilir, nil olursa 1 bas değere.
+
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
-        let cat = categoryArray[indexPath.row]
-        cell.textLabel?.text = cat.name
-   
+        
+          
+        
+               if categories?.count == 0 {
+                   cell.textLabel?.text = "No Categories added"
+               }  else {
+                cell.textLabel?.text = categories?[indexPath.row].name
+               }
+               
+
+//        cell.textLabel?.text = categories?[indexPath.row].name ?? "No Categories Added yet"
+//
         return cell
     }
     
@@ -81,8 +96,8 @@ extension CategoryViewController {
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         let destinationVC = segue.destination as! ToDoListViewController
         
-        print(indexPath1)
-        destinationVC.selectedCategory = categoryArray[self.indexPath1]
+       
+        destinationVC.selectedCategory = categories?[self.indexPath1]
                
     }
     
@@ -107,20 +122,19 @@ extension CategoryViewController {
         self.tableView.reloadData()
     }
     
-    func requestData(with request:NSFetchRequest<CategoryData> = CategoryData.fetchRequest()) {
-        
-        do {
-            categoryArray =  try  context.fetch(request)
-        } catch {
-            print("Error retrieving context \(error)")
-        }
-    }
+//    func requestData(with request:NSFetchRequest<CategoryData> = CategoryData.fetchRequest()) {
+//
+//        do {
+//            categoryArray =  try  context.fetch(request)
+//        } catch {
+//            print("Error retrieving context \(error)")
+//        }
+//    }
     
     func loadCategories() {
         
-//        let request : NSFetchRequest<CategoryData> = CategoryData.fetchRequest()
-//        requestData(with: request)
-//        
+        categories = realm.objects(Category.self)
+ 
     }
 }
 
