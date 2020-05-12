@@ -8,11 +8,14 @@
 
 import UIKit
 import RealmSwift
-class ToDoListViewController: UITableViewController {
+import ChameleonFramework
+
+class ToDoListViewController: SwipeTableViewController {
     
     var textField = UITextField()
     let realm = try! Realm()
     var todoItems: Results<Item>?
+    var parentColor: String?
     @IBOutlet weak var searchBar: UISearchBar!
     
     var selectedCategory : Category? {
@@ -46,6 +49,7 @@ class ToDoListViewController: UITableViewController {
                 do {
                     try self.realm.write {
                         let newItem = Item()
+                        newItem.color = UIColor.randomFlat().hexValue()
                         newItem.title = self.textField.text!
 //                        newItem.dateAsTimeStamp = Date()  timestamp sorting in ikinci bölümü
                         currentCategory.items.append(newItem)
@@ -126,7 +130,27 @@ class ToDoListViewController: UITableViewController {
              tableView.reloadData()
     }
     
-    
+    override func updateModel(at indexPath: IndexPath) { //superclass içinde anlamsız bir fonksiyon yazdım ve burada gerçek fonksiyonunu verdim
+        
+        if let itemForDeletion = self.todoItems?[indexPath.row]{
+            
+      
+        do {
+            try self.realm.write {
+
+
+                self.realm.delete(itemForDeletion)
+                
+             
+            }
+            
+        }
+        catch {
+            print("Error deleting item \(error)")
+        }
+       }
+      }
+
     
 }
 
@@ -180,12 +204,17 @@ extension ToDoListViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
+
         
+         let cell = super.tableView(tableView, cellForRowAt: indexPath)
+     
         if todoItems?.count == 0 {
                     cell.textLabel?.text = "No items added yet."
                   }  else {
             let item = todoItems?[indexPath.row]
+            
+            cell.backgroundColor = UIColor(hexString: parentColor!)!.darken(byPercentage: CGFloat(Float(indexPath.row)/Float(todoItems!.count)))
+//            cell.backgroundColor = GradientColor(UIGradientStyle.leftToRight, frame: tableView.frame, colors: [UIColor.flatSkyBlue() ,UIColor.flatRedDark()])
             cell.textLabel?.text =  item?.title
             cell.accessoryType = item?.done ?? false ? .checkmark : .none
                   }
