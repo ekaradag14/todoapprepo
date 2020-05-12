@@ -13,16 +13,19 @@ class ToDoListViewController: UITableViewController {
     var textField = UITextField()
     let realm = try! Realm()
     var todoItems: Results<Item>?
+    @IBOutlet weak var searchBar: UISearchBar!
     
     var selectedCategory : Category? {
         didSet{
             loadItems()
+            
         }
     }
     
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        searchBar.delegate = self
         
         //        print(dataFilePath)
         //        retrieveData()
@@ -44,6 +47,7 @@ class ToDoListViewController: UITableViewController {
                     try self.realm.write {
                         let newItem = Item()
                         newItem.title = self.textField.text!
+//                        newItem.dateAsTimeStamp = Date()  timestamp sorting in ikinci bölümü
                         currentCategory.items.append(newItem)
                         
                     }
@@ -119,55 +123,47 @@ class ToDoListViewController: UITableViewController {
     func loadItems() {
         
         todoItems = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
-        
+             tableView.reloadData()
     }
     
     
     
 }
-//
-//extension ToDoListViewController : UISearchBarDelegate {
-//
-//    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-//        let request : NSFetchRequest<Item> = Item.fetchRequest()
-//
-//        let parentalPredicate = NSPredicate(format: "parentRelationship.name MATCHES %@", selectedCategory!.name!)
-//        let searchPredicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!) // [cd] burada case de diacrateic ' e dikkat etme anlamına getiriyor
-//        let searchCompoundPredicate = NSCompoundPredicate(type: .and, subpredicates: [parentalPredicate, searchPredicate])
-//
-//
-//        request.predicate = searchCompoundPredicate
-//
-//        let sortDescriptor = NSSortDescriptor(key: "title", ascending: true)
-//
-//        request.sortDescriptors = [sortDescriptor]
-//
-//        takeData(with: request, usingPredicate: searchCompoundPredicate)
-//        tableView.reloadData()
-//
-//    }
-//
-//    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-//        if searchBar.text?.count == 0  {
-//            let parentalPredicate = NSPredicate(format: "parentRelationship.name MATCHES %@", selectedCategory!.name!)
-//
-//
-//            takeData(usingPredicate: parentalPredicate)
-//            tableView.reloadData()
-//            // yani cursor'ı durdur ve ve klavyeyi aşağıya çek çünkü artık first responder yani seçilmiş eleman değilsin
-//
-//            DispatchQueue.main.async { // user interface i yani foreground ı değiştirirken her zaman main thread e geç
-//
-//                searchBar.resignFirstResponder()
-//
-//            }
-//
-//        }
-//
-//    }
-//
-//}
-//
+
+extension ToDoListViewController : UISearchBarDelegate {
+    
+
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        
+        todoItems = todoItems?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "date", ascending: true)
+
+    tableView.reloadData()
+        
+ 
+    }
+
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        
+       
+        if searchBar.text?.count == 0  {
+           
+            loadItems()
+            
+            DispatchQueue.main.async { // user interface i yani foreground ı değiştirirken her zaman main thread e geç
+
+                searchBar.resignFirstResponder()
+
+            }
+}
+        else {
+              todoItems = todoItems?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "title", ascending: true)
+            tableView.reloadData()
+        }
+
+    }
+
+}
+
 extension ToDoListViewController {
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {

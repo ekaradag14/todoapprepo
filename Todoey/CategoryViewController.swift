@@ -21,7 +21,7 @@ class CategoryViewController: UITableViewController {
     override func viewDidLoad() {
         
         super.viewDidLoad()
-        
+    
         loadCategories()
       
 //        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
