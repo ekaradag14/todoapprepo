@@ -29,7 +29,7 @@ class ToDoListViewController: SwipeTableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         searchBar.delegate = self
-        
+
         //        print(dataFilePath)
         //        retrieveData()
         //        let parentalPredicate = NSPredicate(format: "parentRelationship.name MATCHES %@", selectedCategory!.name!)
@@ -39,6 +39,34 @@ class ToDoListViewController: SwipeTableViewController {
         //            itemArray = items
         //        }
         // Do any additional setup after loading the view.
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        
+        searchBar.barTintColor = UIColor(hexString: parentColor!) // bunu buraya aldık çünkü view did appearda navbar'ın oluşturulup oluşturulmadığından emin değildik
+        navigationItem.title = selectedCategory?.name
+        
+//        UINavigationBar.appearance().titleTextAttributes = [NSAttributedString.Key.foregroundColor : UIColor.white ]
+      
+//        navigationController?.navigationBar.titleTextAttributes =
+        /*
+        if let colorHex = selectedCategory?.color {
+            guard let navbar = navigationController?.navigationBar else {fatalError("Navigation Controller does not exist")}
+            navbar.backgroundColor = UIColor(hexString: colorHex)
+        }
+         
+         Burada da angela'nın yöntemi var o rengi property'e atamış ve ordan çekmişti ve life cycle test ederken exist mi değil mi diye baktık
+        */
+        
+        navigationController?.navigationBar.backgroundColor = UIColor(hexString: parentColor!)
+        navigationController?.navigationBar.tintColor =  ContrastColorOf(UIColor(hexString: parentColor!)!, returnFlat: true)
+        navigationController?.navigationBar.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor :  ContrastColorOf(UIColor(hexString: parentColor!)!, returnFlat: true) ] // BURADA TİTLE IMIZI LARGE YAPTIĞIMIZ İÇİN MAIN STORYBOARD DAN LARGETITLE TEXT ATT KULLANIYORUZ
+            
+//            ContrastColorOf(UIColor(hexString: parentColor!)!, returnFlat: true)
+        
+        UITextField.appearance(whenContainedInInstancesOf: [UISearchBar.self]).backgroundColor = UIColor.white
+
+        UITextField.appearance(whenContainedInInstancesOf: [UISearchBar.self]).defaultTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.black]
     }
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         let alert = UIAlertController(title: "Add New Todoey Item", message: "", preferredStyle: .alert)
@@ -214,6 +242,7 @@ extension ToDoListViewController {
             let item = todoItems?[indexPath.row]
             
             cell.backgroundColor = UIColor(hexString: parentColor!)!.darken(byPercentage: CGFloat(Float(indexPath.row)/Float(todoItems!.count)))
+              cell.textLabel?.textColor = ContrastColorOf(cell.backgroundColor!, returnFlat: true)
 //            cell.backgroundColor = GradientColor(UIGradientStyle.leftToRight, frame: tableView.frame, colors: [UIColor.flatSkyBlue() ,UIColor.flatRedDark()])
             cell.textLabel?.text =  item?.title
             cell.accessoryType = item?.done ?? false ? .checkmark : .none

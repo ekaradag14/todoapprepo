@@ -29,6 +29,10 @@ class CategoryViewController: SwipeTableViewController {
 //        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
     }
+    
+    override func viewWillAppear(_ animated: Bool) {
+         navigationController?.navigationBar.backgroundColor = FlatSkyBlue()
+    }
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         let alert = UIAlertController(title: "Add New Todoey Item", message: "", preferredStyle: .alert)
         let action = UIAlertAction(title: "Add Category", style: .default) { (action) in
